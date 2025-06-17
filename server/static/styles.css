@@ -1,0 +1,74 @@
+body {
+    background: black;
+    color: red;
+    font-family: monospace;
+    font-size: 1.2em;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.dial-row {
+    display: flex;
+    justify-content: space-around;
+    flex-grow: 1;
+    align-items: center;
+}
+
+.dial-container {
+    position: relative;
+    width: 40%;
+}
+
+canvas {
+    width: 100%;
+    height: auto;
+}
+
+.dial-center {
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2em;
+}
+
+.dial-usage {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2em;
+    font-weight: bold;
+    color: red;
+    pointer-events: none;
+}
+
+.dial-label {
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 1.2em;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 20%;
+    background: #111;
+    font-size: 1.2em;
+    padding: 10px;
+}
+
+.info-box {
+    flex: 1;
+    text-align: center;
+}
