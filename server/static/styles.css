@@ -1,3 +1,7 @@
+html, body {
+  cursor: none;
+}
+
 body {
     background: black;
     color: red;
