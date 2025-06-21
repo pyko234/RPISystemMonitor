@@ -79,13 +79,16 @@ def get_fps(exe):
             if p.info['name'] and p.info['name'].lower() == exe.lower():
                 return True
         return False
+    
+    creation_flags = subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'STARTUPINFO') else 0
 
     proc = subprocess.Popen(
         ["PresentMon-2.3.1-x64.exe", "-no_csv", "-output_stdout", "-stop_existing_session", "-process_name", exe],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         bufsize=1,
-        universal_newlines=True
+        universal_newlines=True,
+        creationflags=creation_flags
     )
 
     try:
@@ -189,4 +192,6 @@ def get_running_game():
     return None
 
 if __name__ == "__main__":
-    print(get_stats())
+    while True:
+        print(get_stats())
+        time.sleep(5)
