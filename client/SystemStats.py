@@ -60,7 +60,7 @@ def get_stats():
         if not fps_thread_started:
             fps_thread_started = True
             threading.Thread(target=get_fps, args=(game[1],), daemon=True).start()
-        
+
     return {
         'cpuUsage': f"{cpu_usage:.1f}",
         'cpuTemp': f"{cpu_temp:.1f}",
@@ -93,13 +93,16 @@ def get_fps(exe):
 
     try:
         for line in proc.stdout:
+            print(line)
             try:
                 if not is_running():
                     break
                 ms_between_presents= float(line.strip().split(',')[11])
                 fps = 1000.0 / ms_between_presents
             except IndexError:
-                pass            
+                pass
+            except ValueError:
+                pass   
             except Exception as e:
                 print(f"Unknown Error: {e}")
     except KeyboardInterrupt:
