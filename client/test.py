@@ -30,16 +30,42 @@ def get_fps(exe):
         proc.terminate()
 
 
-def get_stats():
+def get_data():
     return {
             'cpuUsage': random.randint(40, 90),
             'cpuTemp': random.randint(40, 90),
             'gpuUsage': random.randint(1, 99),
             'gpuTemp': random.randint(40, 90),
             'game': "Chillin'",
-            'time': time.strftime("%I:%M %p", time.localtime())
+            'time': time.strftime("%I:%M %p", time.localtime()),
+            'fps': 0
         }
 
-threading.Thread(target=get_fps, args=("chrome.exe",)).start()
-#while True:
-#    print(f"{fps:.1f}")
+def get_stats():
+    i = 1
+    char = 'a'
+    url = 'http://localhost:5000/push'
+    while True:
+        if char == 'a':
+            data = get_data()
+        else:
+            data = get_data()
+            data["game"] = "Dredge"
+            data["fps"] = 60
+        if i % 5 == 0:
+            
+            char = 'a' if char == 'b' else 'b'
+        
+        i = i + 1
+        
+        try:
+            response = requests.post(url, json=data, timeout=2)
+            if response.status_code == 200:
+                print("Data sent successfully")
+            else:
+                print("Server responded with status:", response.status_code)
+        except requests.exceptions.RequestException as e:
+            print("POST failed:", e)
+        time.sleep(1)
+
+get_stats()

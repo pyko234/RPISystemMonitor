@@ -27,6 +27,7 @@
     <!-- RAM and Game Info -->
     <div class="info-row">
       <div class="info-box" id="gameName">Working on: Unknown</div>
+      <div class="info-box" id="fps-box">FPS: 0</div>
       <div class="clock" id="clock">00:00 AM</div>
     </div>
   </div>
@@ -59,11 +60,24 @@
     const cpuChart = createDial('cpuDial');
     const gpuChart = createDial('gpuDial');
 
-    function updateUI(cpuUsage, cpuTemp, gpuUsage, gpuTemp, game, time) {
+    function updateUI(cpuUsage, cpuTemp, gpuUsage, gpuTemp, game, time, fps) {
         cpuChart.data.datasets[0].data = [cpuUsage, 100 - cpuUsage];
         gpuChart.data.datasets[0].data = [gpuUsage, 100 - gpuUsage];
         cpuChart.update();
         gpuChart.update();
+
+        const fpsBox = document.getElementById('fps-box');
+
+        // Determine if FPS box should be visible
+        const shouldShowFPS = game !== "Chillin'" && fps > 0;
+
+        console.log(shouldShowFPS);
+
+        // Set visibility accordingly
+        fpsBox.style.visibility = shouldShowFPS ? 'visible' : 'hidden';
+
+        // Update FPS text regardless (doesn't hurt)
+        fpsBox.textContent = `FPS: ${fps}`;
 
         document.getElementById('cpuTemp').textContent = `${cpuTemp}°C`;
         document.getElementById('gpuTemp').textContent = `${gpuTemp}°C`;
@@ -72,7 +86,6 @@
         document.getElementById('gpuUsage').textContent = `${gpuUsage}%`;
 
         document.getElementById('gameName').textContent = `Working on: ${game}`;
-
         document.getElementById('clock').textContent = `${time}`;
     }
 
@@ -86,7 +99,8 @@
             data.gpuUsage,
             data.gpuTemp,
             data.game,
-            data.time
+            data.time,
+            data.fps
         );
         } catch (err) {
         console.error('Failed to fetch data:', err);

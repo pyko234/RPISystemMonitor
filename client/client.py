@@ -3,7 +3,7 @@ import requests
 import time
 
 def main():
-    url = 'http://localhost:5000/push'  # Replace with your Pi’s IP
+    url = 'http://192.168.68.150:5000/push'  # Replace with your Pi’s IP
     while True:
         data = get_stats()
 
