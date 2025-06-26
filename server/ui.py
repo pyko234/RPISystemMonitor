@@ -66,7 +66,7 @@ class CurvedBarDial(QWidget):
         font.setPointSize(18)
         painter.setFont(font)
         painter.drawText(self.rect(), Qt.AlignCenter, f"{self.temp}°C")
-        painter.drawText(0, 0, w, label_height, Qt.AlignHCenter | Qt.AlignBottom, f"{self._usage}%")
+        painter.drawText(0, 0, w, label_height, Qt.AlignHCenter | Qt.AlignBottom, f"{self._usage:.1f}%")
 
 # This acts like a "frame" or parent container for the layout
 class PageWidget(QWidget):
