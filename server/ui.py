@@ -150,6 +150,7 @@ class DashboardWindow(QWidget):
         self.setFixedSize(self.width, self.height)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setStyleSheet("background-color: black; border: 2px solid gray;")
+        self.setCursor(Qt.BlankCursor)
 
         self.center()
 
