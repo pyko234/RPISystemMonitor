@@ -62,10 +62,10 @@ def get_stats():
             threading.Thread(target=get_fps, args=(game[1],), daemon=True).start()
 
     return {
-        'cpuUsage': f"{cpu_usage:.1f}",
-        'cpuTemp': f"{cpu_temp:.1f}",
-        'gpuUsage': f"{gpu_usage:.1f}",
-        'gpuTemp': f"{gpu_temp:.1f}",
+        'cpu_usage': f"{cpu_usage:.0f}",
+        'cpu_temp': f"{cpu_temp:.1f}",
+        'gpu_usage': f"{gpu_usage:.0f}",
+        'gpu_temp': f"{gpu_temp:.1f}",
         'game': game[0],
         'time': time.strftime("%I:%M %p", time.localtime()),
         'fps': f"{fps:.0f}"
