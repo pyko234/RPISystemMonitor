@@ -29,7 +29,7 @@ class CurvedBarDial(QWidget):
         self.temp = temp
         self._anim.stop()
         self._anim.setStartValue(self._usage)
-        self._anim.setEndValue(max(self.min_value, min(self.max_value, usage)))
+        self._anim.setEndValue(max(self.min_value, min(self.max_value, float(usage))))
         self._anim.start()
 
     def paintEvent(self, event):
@@ -65,8 +65,8 @@ class CurvedBarDial(QWidget):
         font = painter.font()
         font.setPointSize(18)
         painter.setFont(font)
-        painter.drawText(self.rect(), Qt.AlignCenter, f"{self.temp:.0f}°C")
-        painter.drawText(0, 0, w, label_height, Qt.AlignHCenter | Qt.AlignBottom, f"{self._usage:.0f}%")
+        painter.drawText(self.rect(), Qt.AlignCenter, f"{self.temp}°C")
+        painter.drawText(0, 0, w, label_height, Qt.AlignHCenter | Qt.AlignBottom, f"{self._usage}%")
 
 # This acts like a "frame" or parent container for the layout
 class PageWidget(QWidget):
@@ -131,7 +131,7 @@ class PageWidget(QWidget):
         self.cpu_dial.setValue(data['cpu_usage'], data['cpu_temp'])
         self.gpu_dial.setValue(data['gpu_usage'], data['gpu_usage'])
         self.game_label.setText(f"Working on: {data['game']}")
-        self.clock_label.setText(data['clock'])
+        self.clock_label.setText(data['time'])
 
         if data['game'] != "Chillin'":
             self.fps_label.setText(f"FPS: {data['fps']}")
