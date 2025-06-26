@@ -26,10 +26,13 @@ if __name__ == '__main__':
             char = 'a' if char == 'b' else 'b'
         
         try:
-            response = requests.post('http://192.168.68.150:5000', json=data)
-            print(response.status_code)
-        except Exception as e:
-            print(f"Error connecting: {e}")
+            response = requests.post('http://192.168.68.150:5000', json=data, timeout=1)
+            print(response.text)
+        except requests.exceptions.Timeout:
+            print("Request timed out")
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
+            
         i = i + 1
         
         time.sleep(1)
