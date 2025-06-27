@@ -128,8 +128,9 @@ class PageWidget(QWidget):
 
 
     def update_ui(self, data):
+        print(data)
         self.cpu_dial.setValue(data['cpu_usage'], data['cpu_temp'])
-        self.gpu_dial.setValue(data['gpu_usage'], data['gpu_usage'])
+        self.gpu_dial.setValue(data['gpu_usage'], data['gpu_temp'])
         self.game_label.setText(f"Working on: {data['game']}")
         self.clock_label.setText(data['time'])
 
