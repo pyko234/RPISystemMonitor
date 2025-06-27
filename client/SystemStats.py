@@ -10,6 +10,7 @@ from pathlib import Path
 
 fps = 0
 fps_thread_started = False
+fps_lock = threading.Lock()
 games = {}
 game_thread_started = False
 apps_path = "E:\\SteamLibrary\\steamapps"
@@ -61,6 +62,9 @@ def get_stats():
             fps_thread_started = True
             threading.Thread(target=get_fps, args=(game[1],), daemon=True).start()
 
+    with fps_lock:
+        current_fps = fps
+
     return {
         'cpu_usage': f"{cpu_usage:.0f}",
         'cpu_temp': f"{cpu_temp:.1f}",
@@ -68,7 +72,7 @@ def get_stats():
         'gpu_temp': f"{gpu_temp:.1f}",
         'game': game[0],
         'time': time.strftime("%I:%M %p", time.localtime()),
-        'fps': f"{fps:.0f}"
+        'fps': f"{current_fps:.0f}"
     }
 
 def get_fps(exe):
@@ -83,7 +87,7 @@ def get_fps(exe):
     creation_flags = subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'STARTUPINFO') else 0
 
     proc = subprocess.Popen(
-        ["PresentMon-2.3.1-x64.exe", "-no_csv", "-output_stdout", "-stop_existing_session", "-process_name", exe],
+        ["PresentMon-2.3.1-x64.exe", "-output_stdout", "-stop_existing_session", "-process_name", exe],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         bufsize=1,
@@ -95,10 +99,11 @@ def get_fps(exe):
         for line in proc.stdout:
             print(line)
             try:
-                if not is_running():
+                if not is_running() or proc.poll() is not None:
                     break
                 ms_between_presents= float(line.strip().split(',')[11])
-                fps = 1000.0 / ms_between_presents
+                with fps_lock:    
+                    fps = 1000.0 / ms_between_presents
             except IndexError:
                 pass
             except ValueError:
@@ -110,7 +115,8 @@ def get_fps(exe):
     finally:
         proc.terminate()
         fps_thread_started = False
-        fps = 0
+        with fps_lock:
+            fps = 0
 
 def find_all_exes(directory):
     exe_paths = []
