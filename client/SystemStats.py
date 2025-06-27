@@ -66,9 +66,9 @@ def get_stats():
         current_fps = fps
 
     return {
-        'cpu_usage': f"{cpu_usage:.0f}",
+        'cpu_usage': f"{cpu_usage:.1f}",
         'cpu_temp': f"{cpu_temp:.1f}",
-        'gpu_usage': f"{gpu_usage:.0f}",
+        'gpu_usage': f"{gpu_usage:.1f}",
         'gpu_temp': f"{gpu_temp:.1f}",
         'game': game[0],
         'time': time.strftime("%I:%M %p", time.localtime()),
