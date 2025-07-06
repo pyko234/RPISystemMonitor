@@ -9,7 +9,8 @@ from pathlib import Path
 
 
 fps = 0
-fps_thread_started = False
+fps_thread = None
+fps_thread_stop = threading.Event()
 fps_lock = threading.Lock()
 games = {}
 game_thread_started = False
@@ -29,20 +30,16 @@ def watch_manifests(manifest_dir):
             previous_manifests = current_manifests
 
 def get_stats():
-    global fps, fps_thread_started, games, game_thread_started
-    global apps_path
+    global fps, fps_thread, fps_thread_stop, current_game_exe
+    global games, game_thread_started, apps_path
 
     if not game_thread_started:
         threading.Thread(target=watch_manifests, args=(apps_path,), daemon=True).start()
         game_thread_started = True
 
-    # Connect to standard WMI namespace (for RAM speed)
     sys_wmi = wmi.WMI()
-
-    # Connect to OpenHardwareMonitor namespace (for sensor data)
     ohm_wmi = wmi.WMI(namespace="root\\OpenHardwareMonitor")
 
-    # GPU sensor values from OpenHardwareMonitor
     for sensor in ohm_wmi.Sensor():
         if sensor.Name == "GPU Core" and sensor.SensorType == "Load":
             gpu_usage = sensor.value
@@ -52,42 +49,59 @@ def get_stats():
             cpu_temp = sensor.value
         elif sensor.Name == "CPU Total":
             cpu_usage = sensor.value
-    
+
     game = get_running_game()
-    
     if not game:
         game = ("Chillin'", None)
+
+    game_name, game_exe = game
+
+    if game_exe:
+        # Start FPS thread if not running
+        if not fps_thread or not fps_thread.is_alive():
+            #print(f"[Main] Starting FPS thread for: {game_exe}")
+            fps_thread_stop.clear()
+            fps_thread = threading.Thread(target=get_fps, args=(game_exe, fps_thread_stop), daemon=True)
+            fps_thread.start()
+
     else:
-        if not fps_thread_started:
-            fps_thread_started = True
-            threading.Thread(target=get_fps, args=(game[1],), daemon=True).start()
+        # No game running, stop thread if it exists
+        if fps_thread and fps_thread.is_alive():
+            #print("[Main] Stopping FPS thread — no game running.")
+            fps_thread_stop.set()
+            fps_thread.join()
 
     with fps_lock:
-        current_fps = fps
+        current_fps = fps 
 
     return {
         'cpu_usage': f"{cpu_usage:.1f}",
         'cpu_temp': f"{cpu_temp:.1f}",
         'gpu_usage': f"{gpu_usage:.1f}",
         'gpu_temp': f"{gpu_temp:.1f}",
-        'game': game[0],
+        'game': game_name,
         'time': time.strftime("%I:%M %p", time.localtime()),
         'fps': f"{current_fps:.0f}"
     }
 
-def get_fps(exe):
-    global fps, fps_thread_started
+def get_fps(exe, stop_event):
+    global fps, fps_lock
 
     def is_running():
         for p in psutil.process_iter(['name']):
             if p.info['name'] and p.info['name'].lower() == exe.lower():
                 return True
         return False
-    
+
     creation_flags = subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'STARTUPINFO') else 0
 
     proc = subprocess.Popen(
-        ["PresentMon-2.3.1-x64.exe", "-output_stdout", "-stop_existing_session", "-process_name", exe],
+        [
+            "PresentMon-2.3.1-x64.exe",
+            "-output_stdout",
+            "-stop_existing_session",
+            "-process_name", exe
+        ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         bufsize=1,
@@ -96,25 +110,26 @@ def get_fps(exe):
     )
 
     try:
-        for line in proc.stdout:
-            print(line)
+        while not stop_event.is_set():
+            line = proc.stdout.readline()
+            if not line:
+                break
+            if proc.poll() is not None or not is_running():
+                break
+
             try:
-                if not is_running() or proc.poll() is not None:
-                    break
-                ms_between_presents= float(line.strip().split(',')[11])
-                with fps_lock:    
+                ms_between_presents = float(line.strip().split(',')[11])
+                with fps_lock:
                     fps = 1000.0 / ms_between_presents
-            except IndexError:
-                pass
-            except ValueError:
-                pass   
-            except Exception as e:
-                print(f"Unknown Error: {e}")
-    except KeyboardInterrupt:
-        pass
+                time.sleep(1)
+            except (IndexError, ValueError):
+                continue
     finally:
-        proc.terminate()
-        fps_thread_started = False
+        try:
+            proc.terminate()
+            proc.wait(timeout=5)
+        except Exception:
+            proc.kill()
         with fps_lock:
             fps = 0
 
