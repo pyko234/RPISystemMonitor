@@ -204,9 +204,9 @@ class DashboardWindow(QWidget):
         self.page.move(20, 20)
 
         # This is to test updating the UI
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.simulate_updates)
-        self.timer.start(1000)
+        #self.timer = QTimer()
+        #self.timer.timeout.connect(self.simulate_updates)
+        #self.timer.start(1000)
 
     def center(self):
         # Move the window to the center of the screen
