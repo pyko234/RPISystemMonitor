@@ -1,10 +1,6 @@
 import wmi
-import os
-import re
 import psutil
 import time
-import subprocess
-import threading
 from pathlib import Path
 
 
