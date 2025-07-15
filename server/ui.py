@@ -88,8 +88,8 @@ class StraightBarWidget(QWidget):
     used = pyqtProperty(float, fget=getUsed, fset=setUsed)
 
     def setValue(self, used, total):
-        self._total = max(total, 0.1)  # prevent divide-by-zero
-        used = min(used, self._total)  # clamp to max
+        self._total = max(float(total), 0.1)  # prevent divide-by-zero
+        used = min(float(used), self._total)  # clamp to max
         self._anim.stop()
         self._anim.setStartValue(self._used)
         self._anim.setEndValue(used)
