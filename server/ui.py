@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QDesktopWidget
-from PyQt5.QtGui import QPainter, QPen, QColor
+from PyQt5.QtGui import QPainter, QPen, QColor, QFont
 from PyQt5.QtCore import Qt, pyqtSignal, QRectF, QTimer, pyqtProperty, QPropertyAnimation, QEasingCurve
 import math
 
@@ -68,6 +68,65 @@ class CurvedBarDial(QWidget):
         painter.drawText(self.rect(), Qt.AlignCenter, f"{self.temp}°C")
         painter.drawText(0, 0, w, label_height, Qt.AlignHCenter | Qt.AlignBottom, f"{self._usage:.1f}%")
 
+class StraightBarWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._used = 0.0  # in GB
+        self._total = 1.0  # in GB (prevent divide-by-zero)
+
+        self._anim = QPropertyAnimation(self, b"used")
+        self._anim.setDuration(500)
+        self._anim.setEasingCurve(QEasingCurve.InOutCubic)
+
+    def getUsed(self):
+        return self._used
+
+    def setUsed(self, value):
+        self._used = value
+        self.update()
+
+    used = pyqtProperty(float, fget=getUsed, fset=setUsed)
+
+    def setValue(self, used, total):
+        self._total = max(total, 0.1)  # prevent divide-by-zero
+        used = min(used, self._total)  # clamp to max
+        self._anim.stop()
+        self._anim.setStartValue(self._used)
+        self._anim.setEndValue(used)
+        self._anim.start()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        w, h = self.width(), self.height()
+        margin = 10
+        bar_height = 25
+        text_height = 20
+
+        # Geometry
+        bar_y = text_height * 2
+        bar_width = w - 2 * margin
+        ratio = self._used / self._total
+        usage_width = int(ratio * bar_width)
+
+        # Draw background bar
+        painter.setBrush(QColor("#333"))
+        painter.setPen(Qt.NoPen)
+        painter.drawRect(margin, bar_y, bar_width, bar_height)
+
+        # Draw foreground bar
+        painter.setBrush(QColor("red"))
+        painter.drawRect(margin, bar_y, usage_width, bar_height)
+
+        # Draw label
+        painter.setPen(QColor("red"))
+        font = QFont()
+        font.setPointSize(20)
+        painter.setFont(font)
+        painter.drawText(self.rect(), Qt.AlignHCenter | Qt.AlignTop, f"{self._used:.1f} GB / {self._total:.1f} GB")
+
+        
 # This acts like a "frame" or parent container for the layout
 class PageWidget(QWidget):
     update_signal = pyqtSignal(dict)
@@ -109,35 +168,20 @@ class PageWidget(QWidget):
         layout.addLayout(row2, stretch=7)
 
         # Row 3
-        row3_container = QWidget()
-        row3_container.setStyleSheet("background-color: #333333; border: none")
         row3 = QHBoxLayout()
         row3.setContentsMargins(5, 0, 5, 0)
-        row3_container.setLayout(row3)
-        self.game_label = QLabel("Working on: Chillin'")
-        self.clock_label = QLabel("00:00 AM")
-        self.fps_label = QLabel("")
-        self.fps_label.setFixedWidth(150)
-        self.game_label.setStyleSheet(label_style)
-        self.clock_label.setStyleSheet(label_style)
-        self.fps_label.setStyleSheet(label_style)
-        row3.addWidget(self.game_label, alignment=Qt.AlignLeft)
-        row3.addWidget(self.fps_label, alignment=Qt.AlignRight)
-        row3.addWidget(self.clock_label, alignment=Qt.AlignCenter)
-        layout.addWidget(row3_container, stretch=2)
+        self.ram_bar = StraightBarWidget()
+        self.ram_bar.setValue(3.4,8.0)
+        row3.addWidget(self.ram_bar)
+        layout.addLayout(row3, stretch=2)
+
 
 
     def update_ui(self, data):
         print(data)
         self.cpu_dial.setValue(data['cpu_usage'], data['cpu_temp'])
         self.gpu_dial.setValue(data['gpu_usage'], data['gpu_temp'])
-        self.game_label.setText(f"Working on: {data['game']}")
-        self.clock_label.setText(data['time'])
-
-        if data['game'] != "Chillin'":
-            self.fps_label.setText(f"FPS: {data['fps']}")
-        elif data['game'] == "Chillin'":
-            self.fps_label.setText("")
+        self.ram_bar.setValue(data['ram_used'],data['ram_total'])
 
 
 class DashboardWindow(QWidget):
@@ -160,9 +204,9 @@ class DashboardWindow(QWidget):
         self.page.move(20, 20)
 
         # This is to test updating the UI
-        #self.timer = QTimer()
-        #self.timer.timeout.connect(self.simulate_updates)
-        #self.timer.start(1000)
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.simulate_updates)
+        self.timer.start(1000)
 
     def center(self):
         # Move the window to the center of the screen
@@ -178,9 +222,8 @@ class DashboardWindow(QWidget):
             "cpu_temp": random.randint(30, 85),
             "gpu_usage": random.randint(0, 100),
             "gpu_temp": random.randint(30, 85),
-            "game": "DREDGE",
-            "clock": time.strftime("%I:%M %p"),
-            "fps": random.choice([30, 60, 120])
+            "ram_used": random.randint(1,8),
+            "ram_total": 8.0
         }
         self.page.update_ui(sample_data)
 
