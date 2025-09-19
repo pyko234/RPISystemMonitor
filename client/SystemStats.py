@@ -1,33 +1,38 @@
-import wmi
 import psutil
 import time
 from pathlib import Path
+import subprocess
 
+def read_sensors():
+    # Run the C++ binary and capture stdout
+    result = subprocess.run(["./SharedMemoryReader.exe"], capture_output=True, text=True)
+    
+    sensors = {}
+    for line in result.stdout.splitlines():
+        # Example line: [2] CPU temperature = 31.625 °C
+        if "=" in line:
+            idx, rest = line.split("]", 1)
+            name, value_unit = rest.split("=", 1)
+            
+            name = name.strip().lstrip()
+            value, unit = value_unit.strip().split(" ", 1)
+            
+            sensors[name] = f"{float(value):.1f} {unit}"
+    return sensors
 
 def get_stats():
 
-    sys_wmi = wmi.WMI()
-    ohm_wmi = wmi.WMI(namespace="root\\OpenHardwareMonitor")
-
-    for sensor in ohm_wmi.Sensor():
-        if sensor.Name == "GPU Core" and sensor.SensorType == "Load":
-            gpu_usage = sensor.value
-        elif sensor.Name == "GPU Core" and sensor.SensorType == "Temperature":
-            gpu_temp = sensor.value
-        elif sensor.Name == "CPU Package":
-            cpu_temp = sensor.value
-        elif sensor.Name == "CPU Total":
-            cpu_usage = sensor.value
+    sensors = read_sensors()
 
     mem = psutil.virtual_memory()
     used_gb = (mem.total - mem.available) / (1024 ** 3)
     total_gb = mem.total / (1024 ** 3)
 
     return {
-        'cpu_usage': f"{cpu_usage:.1f}",
-        'cpu_temp': f"{cpu_temp:.1f}",
-        'gpu_usage': f"{gpu_usage:.1f}",
-        'gpu_temp': f"{gpu_temp:.1f}",
+        'cpu_usage': f"{sensors["CPU usage"]}",
+        'cpu_temp': f"{sensors["CPU temperature"]}",
+        'gpu_usage': f"{sensors["GPU usage"]}",
+        'gpu_temp': f"{sensors["GPU temperature"]}",
         'ram_used':  f"{used_gb:.1f}",
         'ram_total': f"{total_gb:.1f}"
     }

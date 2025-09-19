@@ -1,2 +1,4 @@
 client/PresentMon*
 venv/
+client/include
+client/src
