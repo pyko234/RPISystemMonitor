@@ -9,7 +9,7 @@ def read_sensors():
     
     sensors = {}
     for line in result.stdout.splitlines():
-        # Example line: [2] CPU temperature = 31.625 °C
+        # Example line: [2] CPU temperature = 31.625
         if "=" in line:
             idx, rest = line.split("]", 1)
             name, value_unit = rest.split("=", 1)
@@ -17,7 +17,7 @@ def read_sensors():
             name = name.strip().lstrip()
             value, unit = value_unit.strip().split(" ", 1)
             
-            sensors[name] = f"{float(value):.1f} {unit}"
+            sensors[name] = f"{float(value):.1f}"
     return sensors
 
 def get_stats():
